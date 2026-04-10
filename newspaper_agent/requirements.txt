@@ -1,0 +1,10 @@
+google-adk>=1.27.4
+google-genai>=0.2.0
+google-api-python-client
+matplotlib
+plotly
+pandas
+pydantic
+pydantic-settings
+youtube-transcript-api
+google-cloud-storage
