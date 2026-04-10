@@ -78,8 +78,7 @@ newspaper-agent/
 
 > [!IMPORTANT]
 > **Public Storage Bucket Configuration:**
-> To use the newspaper publishing feature (`publish_file` tool), you must create a Google Cloud Storage bucket and set its name in the `.env` file as shown above. The `config.py` file loads this value to determine where to upload the generated HTML files.
-> **Note**: If `PUBLIC_ARTIFACT_BUCKET` is not set or empty, the `publish_file` tool will return an error and will not provide a public link. Make sure the bucket is configured for public access if you want shareable links to be viewable by others.
+> To use the newspaper publishing feature (`publish_file` tool), you must create a Google Cloud Storage bucket and set its name in the `.env` file as shown above. The `config.py` file loads this value to determine where to upload the generated HTML files. Make sure the bucket is configured for public access if you want shareable links to be viewable by others.
 
 ## Usage
 
@@ -98,7 +97,7 @@ uv run adk web
 ### Deploying to Agent Engine
 ```bash
 adk deploy agent_engine \
-        --project=mn-org-box-01 \
+        --project=$PROJECT_ID \
         --region=us-central1 \
         --display_name="newspaper_agent" \
         newspaper_agent
