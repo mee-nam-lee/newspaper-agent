@@ -1,4 +1,4 @@
-"""Configuration module for the YouTube Analyst agent."""
+"""Configuration module for the Newspaper Agent."""
 
 import logging
 import os
@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 class AgentModel(BaseModel):
     """Agent model settings."""
 
-    name: str = Field(default="youtube_analyst")
+    name: str = Field(default="newspaper_agent")
     model: str = Field(default="gemini-3-flash-preview")
 
 
 class Config(BaseSettings):
-    """Configuration settings for the YouTube Analyst agent."""
+    """Configuration settings for the Newspaper Agent."""
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(

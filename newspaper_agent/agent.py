@@ -49,10 +49,7 @@ newspaper_agent = Agent(
         publish_file,
         skill_toolset,  # Registers list_skills, load_skill, load_skill_resource
         load_artifacts,
-    ],
-    generate_content_config=genai.types.GenerateContentConfig(
-        max_output_tokens=config.YOUTUBE_AGENT_MAX_OUTPUT_TOKENS,
-    ),
+    ]
 )
 
 root_agent = newspaper_agent
