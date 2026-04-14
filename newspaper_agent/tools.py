@@ -245,7 +245,92 @@ def publish_file(
 
         logger.info(f"Successfully published file to {path_suffix}")
 
-        return f"File successfully published. View it here: {public_url_prefix}/{path_suffix}"
+        try:
+            service_account_email = config.SERVICE_ACCOUNT_EMAIL
+            if not service_account_email:
+                try:
+                    service_account_email = client.get_service_account_email()
+                except Exception:
+                    pass
+
+            if not service_account_email:
+                raise Exception("Service account email is required for signing.")
+
+            import hashlib
+            import urllib.parse
+            import base64
+            import requests
+            from google.auth.transport.requests import Request
+            
+            # 1. Prepare parameters
+            now = datetime.datetime.utcnow()
+            date_str = now.strftime("%Y%m%d")
+            datetime_str = now.strftime("%Y%m%dT%H%M%SZ")
+            expires = "3600" # 60 minutes
+            
+            credential_scope = f"{date_str}/auto/storage/goog4_request"
+            
+            canonical_uri = f"/{bucket_name}/{path_suffix}"
+            
+            query_params = {
+                "X-Goog-Algorithm": "GOOG4-RSA-SHA256",
+                "X-Goog-Credential": f"{service_account_email}/{credential_scope}",
+                "X-Goog-Date": datetime_str,
+                "X-Goog-Expires": expires,
+                "X-Goog-SignedHeaders": "host"
+            }
+            
+            # Sort query params and encode
+            sorted_query = sorted(query_params.items())
+            canonical_query_string = urllib.parse.urlencode(sorted_query)
+            
+            canonical_headers = "host:storage.googleapis.com\n"
+            signed_headers = "host"
+            payload_hash = "UNSIGNED-PAYLOAD"
+            
+            # 2. Construct Canonical Request
+            canonical_request = (
+                "GET\n" +
+                canonical_uri + "\n" +
+                canonical_query_string + "\n" +
+                canonical_headers + "\n" +
+                signed_headers + "\n" +
+                payload_hash
+            )
+            
+            # 3. Construct String to Sign
+            string_to_sign = (
+                "GOOG4-RSA-SHA256\n" +
+                datetime_str + "\n" +
+                credential_scope + "\n" +
+                hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()
+            )
+            
+            # 4. Sign using IAM
+            client._credentials.refresh(Request())
+            url = f"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{service_account_email}:signBlob"
+            headers = {
+                "Authorization": f"Bearer {client._credentials.token}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "payload": base64.b64encode(string_to_sign.encode('utf-8')).decode('utf-8')
+            }
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code != 200:
+                raise Exception(f"IAM signBlob failed: {response.text}")
+            
+            signature_base64 = response.json()["signature"]
+            signature_bytes = base64.b64decode(signature_base64)
+            signature_hex = signature_bytes.hex()
+            
+            # 5. Construct Final URL
+            signed_url = f"https://storage.googleapis.com{canonical_uri}?{canonical_query_string}&X-Goog-Signature={signature_hex}"
+            print(f"signed url : {signed_url}")
+            return signed_url
+        except Exception as e:
+            logger.warning(f"Failed to generate signed URL: {e}. Falling back to public URL for local testing.")
+            return f"{public_url_prefix}/{path_suffix}"
 
     except Exception as e:
         logger.error(f"Failed to publish file: {e}")
