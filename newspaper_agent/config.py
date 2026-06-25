@@ -14,7 +14,7 @@ class AgentModel(BaseModel):
     """Agent model settings."""
 
     name: str = Field(default="newspaper_agent")
-    model: str = Field(default="gemini-3-flash-preview")
+    model: str = Field(default="gemini-3.5-flash")
 
 
 class Config(BaseSettings):
